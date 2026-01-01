@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "meals": {
+      // Index on the userId to allow querying by user
+      ".indexOn": ["userId"],
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

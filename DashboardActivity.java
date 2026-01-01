@@ -7,15 +7,17 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.GridLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +32,10 @@ public class DashboardActivity extends AppCompatActivity {
     private FirebaseManager firebaseManager;
     private FirebaseAuth firebaseAuth;
     private User currentUser;
+
+    private RecyclerView rvPaymentHistory;
+    private PaymentHistoryAdapter paymentHistoryAdapter;
+    private List<PaymentRecord> paymentRecords;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,15 +82,12 @@ public class DashboardActivity extends AppCompatActivity {
     private void setupDashboardUI() {
         if (currentUser == null) return;
 
-        // 1. Populate User Details
         TextView tvUserName = findViewById(R.id.tvUserName);
         tvUserName.setText(currentUser.getFullName() + " (" + currentUser.getDepartment() + ")");
 
-        // 2. Setup Buttons
         Button btnLogout = findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> logout());
 
-        // Note: You need to add this Button to your activity_dashboard.xml layout file.
         Button btnManageMeals = findViewById(R.id.btnManageMeals);
         btnManageMeals.setOnClickListener(v -> {
             Intent intent = new Intent(this, MealManagementActivity.class);
@@ -92,9 +95,22 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // 3. Display Data
-        displayPaymentHistory();
+        setupRecyclerView();
         fetchAndDisplayMealData();
+    }
+
+    private void setupRecyclerView() {
+        rvPaymentHistory = findViewById(R.id.rvPaymentHistory);
+        rvPaymentHistory.setLayoutManager(new LinearLayoutManager(this));
+
+        // Create sample data
+        paymentRecords = new ArrayList<>();
+        paymentRecords.add(new PaymentRecord("Jan 2025", 1755, 0, 50, 10, 20, 1835));
+        paymentRecords.add(new PaymentRecord("Dec 2024", 1600, 10, 50, 10, 20, 1690));
+        paymentRecords.add(new PaymentRecord("Nov 2024", 1800, 0, 50, 10, 20, 1880));
+
+        paymentHistoryAdapter = new PaymentHistoryAdapter(paymentRecords);
+        rvPaymentHistory.setAdapter(paymentHistoryAdapter);
     }
 
     private void fetchAndDisplayMealData() {
@@ -131,7 +147,8 @@ public class DashboardActivity extends AppCompatActivity {
             String date = dateFormat.format(cal.getTime());
             String status = recordsMap.containsKey(date) ? recordsMap.get(date).getStatus() : "MEAL_ON";
 
-            TextView dayView = makeText(String.valueOf(day));
+            TextView dayView = new TextView(this);
+            dayView.setText(String.valueOf(day));
             dayView.setGravity(Gravity.CENTER);
             dayView.setPadding(12, 12, 12, 12);
 
@@ -154,56 +171,11 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-
-    private void displayPaymentHistory() {
-        TableLayout tablePayments = findViewById(R.id.tablePayments);
-        addTableHeader(tablePayments);
-
-        PaymentRecord[] records = {
-                new PaymentRecord("Jan 2025", 1755, 0, 50, 10, 20, 1835),
-                new PaymentRecord("Dec 2024", 1600, 10, 50, 10, 20, 1690)
-        };
-
-        for (PaymentRecord r : records) {
-            TableRow row = new TableRow(this);
-            row.addView(makeText(r.month));
-            row.addView(makeText(String.valueOf((int)r.messing)));
-            row.addView(makeText(r.fine > 0 ? String.valueOf((int)r.fine) : "-"));
-            row.addView(makeText(String.valueOf((int)(r.generator + r.water + r.misc))));
-            row.addView(makeText(String.valueOf((int)r.total)));
-            tablePayments.addView(row);
-        }
-    }
-
-    private void addTableHeader(TableLayout table) {
-        TableRow header = new TableRow(this);
-        header.setBackgroundColor(Color.parseColor("#0284C7"));
-
-        String[] headers = {"Month", "Messing", "Fine", "Others", "Total"};
-        for (String h : headers) {
-            TextView tv = makeText(h);
-            tv.setTextColor(Color.WHITE);
-            tv.setGravity(Gravity.CENTER);
-            tv.setPadding(16, 12, 16, 12);
-            header.addView(tv);
-        }
-        table.addView(header);
-    }
-
-    private TextView makeText(String text) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setPadding(12, 12, 12, 12);
-        tv.setTextSize(14);
-        tv.setTextColor(Color.parseColor("#1E293B"));
-        return tv;
-    }
-
     private void logout() {
-        firebaseAuth.signOut(); // Sign out from Firebase
+        firebaseAuth.signOut();
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        prefs.edit().clear().apply(); // Clear saved session
+        prefs.edit().clear().apply();
 
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
         navigateToLogin();

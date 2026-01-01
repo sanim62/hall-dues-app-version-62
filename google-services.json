@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1077401866328",
+    "project_id": "hall-dues-2207062",
+    "storage_bucket": "hall-dues-2207062.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1077401866328:android:e0763b1d868c6a0f5fba2d",
+        "android_client_info": {
+          "package_name": "com.example.halldues"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAC0lKM855j-C57QoNtBsLDUNnqrVF_0g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

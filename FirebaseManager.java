@@ -35,7 +35,6 @@ public class FirebaseManager {
         return instance;
     }
 
-    // ================= CALLBACK INTERFACES =================
     public interface OnUserOperationListener {
         void onSuccess(User user);
         void onFailure(String error);
@@ -108,10 +107,7 @@ public class FirebaseManager {
 
     // ================= MEAL DATA =================
     public void saveMealRecord(MealRecord record, OnMealOperationListener listener) {
-        // CRITICAL: The MealRecord's 'userId' field MUST be the Firebase UID, not the roll number.
-        // The calling code (in your Activity) is responsible for setting this correctly.
-        // Example: mealRecord.setUserId(firebaseAuth.getCurrentUser().getUid());
-        String id = record.getUserId() + "_" + record.getDate();
+         String id = record.getUserId() + "_" + record.getDate();
         record.setId(id);
 
         mealsRef.child(id).setValue(record)
@@ -120,9 +116,7 @@ public class FirebaseManager {
     }
 
     public void getMealRecordsForMonth(String userId, String yearMonth, OnMealListListener listener) {
-        // CRITICAL: The 'userId' parameter for this query MUST be the Firebase Authentication UID.
-        // The query is looking for meal records where the 'userId' field matches this UID.
-        // If 'saveMealRecord' saved records with a roll number in the 'userId' field, this query will fail.
+
         Query query = mealsRef.orderByChild("userId").equalTo(userId);
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -130,9 +124,7 @@ public class FirebaseManager {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<MealRecord> list = new ArrayList<>();
                 if (!snapshot.exists()) {
-                    // This is a strong indicator that the 'userId' in the meal records in the database
-                    // does not match the 'userId' (UID) being passed to this query.
-                    // Please check the data in your Firebase console.
+                    if (listener != null)
                     listener.onSuccess(list); // Return an empty list
                     return;
                 }

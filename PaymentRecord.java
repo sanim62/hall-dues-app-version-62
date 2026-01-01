@@ -18,5 +18,12 @@ public class PaymentRecord {
         this.misc = misc;
         this.total = total;
     }
-}
 
+    public String getMonth() {
+        return month;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+}

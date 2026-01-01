@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f8fafc">
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="24dp">
+
+            <!-- Title -->
+            <TextView
+                android:text="New Boarder Registration"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#1E293B"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <!-- Full Name -->
+            <TextView
+                android:text="Full Name"
+                android:textColor="#475569"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/etFullName"
+                android:hint="Enter your full name"
+                android:inputType="textPersonName"
+                android:padding="12dp"
+                android:background="@drawable/edittext_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Department -->
+            <TextView
+                android:text="Department"
+                android:textColor="#475569"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/etDepartment"
+                android:hint="Enter your department"
+                android:inputType="text"
+                android:padding="12dp"
+                android:background="@drawable/edittext_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Roll Number -->
+            <TextView
+                android:text="Roll Number"
+                android:textColor="#475569"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/etRoll"
+                android:hint="Enter your roll number"
+                android:inputType="text"
+                android:padding="12dp"
+                android:background="@drawable/edittext_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Password -->
+            <TextView
+                android:text="Password"
+                android:textColor="#475569"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <EditText
+                android:id="@+id/etPassword"
+                android:hint="Create a password"
+                android:inputType="textPassword"
+                android:padding="12dp"
+                android:background="@drawable/edittext_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Register Button - FIXED -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnRegister"
+                android:text="Register"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_rounded"
+                android:textColor="#ffffff"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Back to Login -->
+            <TextView
+                android:id="@+id/tvBackToLogin"
+                android:text="Back to Login"
+                android:textColor="#0284C7"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:padding="12dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
