@@ -48,6 +48,8 @@
                 android:inputType="textPersonName"
                 android:padding="12dp"
                 android:background="@drawable/edittext_background"
+                android:textColor="@android:color/black"
+                android:textColorHint="@android:color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"/>
@@ -67,6 +69,8 @@
                 android:inputType="text"
                 android:padding="12dp"
                 android:background="@drawable/edittext_background"
+                android:textColor="@android:color/black"
+                android:textColorHint="@android:color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"/>
@@ -86,6 +90,8 @@
                 android:inputType="text"
                 android:padding="12dp"
                 android:background="@drawable/edittext_background"
+                android:textColor="@android:color/black"
+                android:textColorHint="@android:color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"/>
@@ -105,6 +111,8 @@
                 android:inputType="textPassword"
                 android:padding="12dp"
                 android:background="@drawable/edittext_background"
+                android:textColor="@android:color/black"
+                android:textColorHint="@android:color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"/>
@@ -127,7 +135,7 @@
             <TextView
                 android:id="@+id/tvBackToLogin"
                 android:text="Back to Login"
-                android:textColor="#0284C7"
+                android:textColor="@android:color/black"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="8dp"
                 android:padding="12dp"

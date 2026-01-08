@@ -3,48 +3,54 @@ package com.example.halldues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "LoginActivity";
     private static final String PREFS_NAME = "HallDuesPrefs";
     private static final String KEY_USER_ID = "userId";
 
     private EditText etLoginId, etPassword;
     private Button btnLogin;
     private TextView tvRegisterNavigate;
+
     private FirebaseManager firebaseManager;
     private FirebaseAuth firebaseAuth;
+    private AppDatabase appDatabase;
+    private ExecutorService executorService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check if the user is already logged in.
+        firebaseAuth = FirebaseAuth.getInstance();
+
         if (isUserLoggedIn()) {
             navigateToDashboard(getLoggedInUserId());
-            return; // Skip the rest of the setup.
+            return;
         }
 
         setContentView(R.layout.activity_login);
 
         firebaseManager = FirebaseManager.getInstance();
-        firebaseAuth = FirebaseAuth.getInstance();
+        appDatabase = AppDatabase.getDatabase(this);
+        executorService = Executors.newSingleThreadExecutor();
 
         etLoginId = findViewById(R.id.etLoginId);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         tvRegisterNavigate = findViewById(R.id.tvRegisterNavigate);
 
-        // Handle pre-filled credentials from registration.
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("rollNumber")) {
             etLoginId.setText(intent.getStringExtra("rollNumber"));
@@ -71,10 +77,16 @@ public class LoginActivity extends AppCompatActivity {
         firebaseManager.loginUser(loginId, password, new FirebaseManager.OnUserOperationListener() {
             @Override
             public void onSuccess(User user) {
-                runOnUiThread(() -> {
-                    Toast.makeText(LoginActivity.this, "Welcome, " + user.getFullName() + "!", Toast.LENGTH_SHORT).show();
-                    saveLoginSession(user.getId());
-                    navigateToDashboard(user.getId());
+                // Save user to local database on a background thread
+                executorService.execute(() -> {
+                    appDatabase.userDao().insertUser(user);
+
+                    // Proceed to dashboard on the main thread
+                    runOnUiThread(() -> {
+                        Toast.makeText(LoginActivity.this, "Welcome, " + user.getFullName() + "!", Toast.LENGTH_SHORT).show();
+                        saveLoginSession(user.getId());
+                        navigateToDashboard(user.getId());
+                    });
                 });
             }
 
@@ -95,9 +107,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private boolean isUserLoggedIn() {
-        // A user is logged in if their ID is saved and a Firebase user is active.
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        return prefs.getString(KEY_USER_ID, null) != null && firebaseAuth.getCurrentUser() != null;
+        return getLoggedInUserId() != null && firebaseAuth.getCurrentUser() != null;
     }
 
     private String getLoggedInUserId() {
@@ -109,6 +119,6 @@ public class LoginActivity extends AppCompatActivity {
         Intent intent = new Intent(this, DashboardActivity.class);
         intent.putExtra("userId", userId);
         startActivity(intent);
-        finish(); // Prevent the user from returning to the login screen.
+        finish();
     }
 }

@@ -38,6 +38,8 @@
         android:background="@android:drawable/edit_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
+        android:textColorHint="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -51,7 +53,9 @@
         android:background="@android:drawable/edit_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/etLoginId"
+        android:textColor="@android:color/black"
+        android:textColorHint="@android:color/black"
+        app:layout_constraintTop_toBottomOf="@+id/etLoginId"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
@@ -72,7 +76,7 @@
     <TextView
         android:id="@+id/tvRegisterNavigate"
         android:text="New boarder? Register here"
-        android:textColor="#0284C7"
+        android:textColor="@android:color/black"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/btnLogin"

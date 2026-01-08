@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DashboardActivity extends AppCompatActivity {
 
@@ -31,6 +33,9 @@ public class DashboardActivity extends AppCompatActivity {
 
     private FirebaseManager firebaseManager;
     private FirebaseAuth firebaseAuth;
+    private AppDatabase appDatabase;
+    private ExecutorService executorService;
+
     private User currentUser;
 
     private RecyclerView rvPaymentHistory;
@@ -44,6 +49,8 @@ public class DashboardActivity extends AppCompatActivity {
 
         firebaseManager = FirebaseManager.getInstance();
         firebaseAuth = FirebaseAuth.getInstance();
+        appDatabase = AppDatabase.getDatabase(this);
+        executorService = Executors.newSingleThreadExecutor();
 
         String userId = getIntent().getStringExtra("userId");
         if (userId == null) {
@@ -57,26 +64,42 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         loadUserData(userId);
+        setupRecyclerView();
     }
 
     private void loadUserData(String userId) {
-        firebaseManager.getUserById(userId, new FirebaseManager.OnUserOperationListener() {
-            @Override
-            public void onSuccess(User user) {
-                runOnUiThread(() -> {
-                    currentUser = user;
-                    setupDashboardUI();
-                });
+        // 1. Try to load from local database first for instant UI.
+        executorService.execute(() -> {
+            currentUser = appDatabase.userDao().getUserById(userId);
+            if (currentUser != null) {
+                runOnUiThread(this::setupDashboardUI);
             }
 
-            @Override
-            public void onFailure(String error) {
-                runOnUiThread(() -> {
-                    Toast.makeText(DashboardActivity.this, "Error loading user data: " + error, Toast.LENGTH_LONG).show();
-                    navigateToLogin();
-                });
-            }
+            // 2. Fetch fresh data from Firebase in the background.
+            firebaseManager.getUserById(userId, new FirebaseManager.OnUserOperationListener() {
+                @Override
+                public void onSuccess(User freshUser) {
+                    currentUser = freshUser;
+                    // Save fresh data to local DB.
+                    executorService.execute(() -> appDatabase.userDao().insertUser(freshUser));
+                    // Update UI with fresh data.
+                    runOnUiThread(DashboardActivity.this::setupDashboardUI);
+                    fetchAndDisplayMealData(true); // Fetch fresh meal data
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    if (currentUser == null) { // Only show error if local load also failed
+                        runOnUiThread(() -> {
+                            Toast.makeText(DashboardActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            navigateToLogin();
+                        });
+                    }
+                }
+            });
         });
+
+        fetchAndDisplayMealData(false); // Load meals from local cache first
     }
 
     private void setupDashboardUI() {
@@ -94,39 +117,44 @@ public class DashboardActivity extends AppCompatActivity {
             intent.putExtra("userId", currentUser.getId());
             startActivity(intent);
         });
-
-        setupRecyclerView();
-        fetchAndDisplayMealData();
     }
 
     private void setupRecyclerView() {
         rvPaymentHistory = findViewById(R.id.rvPaymentHistory);
         rvPaymentHistory.setLayoutManager(new LinearLayoutManager(this));
 
-        // Create sample data
         paymentRecords = new ArrayList<>();
         paymentRecords.add(new PaymentRecord("Jan 2025", 1755, 0, 50, 10, 20, 1835));
         paymentRecords.add(new PaymentRecord("Dec 2024", 1600, 10, 50, 10, 20, 1690));
-        paymentRecords.add(new PaymentRecord("Nov 2024", 1800, 0, 50, 10, 20, 1880));
 
         paymentHistoryAdapter = new PaymentHistoryAdapter(paymentRecords);
         rvPaymentHistory.setAdapter(paymentHistoryAdapter);
     }
 
-    private void fetchAndDisplayMealData() {
+    private void fetchAndDisplayMealData(boolean fetchFromRemote) {
+        if (currentUser == null) return;
+
         String yearMonth = new SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Calendar.getInstance().getTime());
 
-        firebaseManager.getMealRecordsForMonth(currentUser.getId(), yearMonth, new FirebaseManager.OnMealListListener() {
-            @Override
-            public void onSuccess(List<MealRecord> records) {
-                runOnUiThread(() -> populateMealGrid(records));
-            }
+        if (fetchFromRemote) {
+            firebaseManager.getMealRecordsForMonth(currentUser.getId(), yearMonth, new FirebaseManager.OnMealListListener() {
+                @Override
+                public void onSuccess(List<MealRecord> records) {
+                    executorService.execute(() -> appDatabase.mealRecordDao().insertAll(records));
+                    runOnUiThread(() -> populateMealGrid(records));
+                }
 
-            @Override
-            public void onFailure(String error) {
-                runOnUiThread(() -> Toast.makeText(DashboardActivity.this, "Could not load meal data.", Toast.LENGTH_SHORT).show());
-            }
-        });
+                @Override
+                public void onFailure(String error) {
+                    // Don't show error, as local data might be available.
+                }
+            });
+        } else {
+            executorService.execute(() -> {
+                List<MealRecord> records = appDatabase.mealRecordDao().getRecordsForMonth(currentUser.getId(), yearMonth);
+                runOnUiThread(() -> populateMealGrid(records));
+            });
+        }
     }
 
     private void populateMealGrid(List<MealRecord> records) {
@@ -134,8 +162,10 @@ public class DashboardActivity extends AppCompatActivity {
         gridMealStatus.removeAllViews();
 
         Map<String, MealRecord> recordsMap = new HashMap<>();
-        for (MealRecord r : records) {
-            recordsMap.put(r.getDate(), r);
+        for (MealRecord record : records) {
+            if (record != null && record.getDate() != null) {
+                recordsMap.put(record.getDate(), record);
+            }
         }
 
         Calendar cal = Calendar.getInstance();
@@ -156,27 +186,17 @@ public class DashboardActivity extends AppCompatActivity {
                 dayView.setBackgroundColor(Color.parseColor("#FEE2E2"));
             } else if ("HALL_CLOSED".equals(status)) {
                 dayView.setBackgroundColor(Color.parseColor("#E2E8F0"));
-            } else {
+            } else { // MEAL_ON
                 dayView.setBackgroundColor(Color.parseColor("#D1FAE5"));
             }
-
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            params.setMargins(4, 4, 4, 4);
-            dayView.setLayoutParams(params);
-
             gridMealStatus.addView(dayView);
         }
     }
 
     private void logout() {
         firebaseAuth.signOut();
-
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         prefs.edit().clear().apply();
-
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
         navigateToLogin();
     }
